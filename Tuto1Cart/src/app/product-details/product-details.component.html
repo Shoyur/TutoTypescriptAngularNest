@@ -1,0 +1,12 @@
+<h2>Product Details</h2>
+
+<div *ngIf="product">
+  <h3>{{ product.name }}</h3>
+  <h4>{{ product.price | currency }}</h4>
+  <!-- | currency, est du piping. permet de transformer du html, l'ajuster -->
+  <!-- dans ce cas ci, ajuster le prix en format cash -->
+  <p>{{ product.description }}</p>
+  <br>
+  <!-- <a class="button" [routerLink]="['/']">Revenir</a> -->
+  <a class="button" (click)="addToCart(product)">Acheter</a>
+</div>

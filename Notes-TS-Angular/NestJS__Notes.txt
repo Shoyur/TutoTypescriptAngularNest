@@ -1,0 +1,193 @@
+NestJS est un framework back-end.
+
+
+********************************
+************ NOTES *************
+    - Vraiment semblable à Angular
+********************************
+********************************
+
+nest generate|g [options] <schematic> [name] [path]
+
+Generate a Nest element.
+  Schematics available on @nestjs/schematics collection:
+    ┌───────────────┬─────────────┬──────────────────────────────────────────────┐
+    │ name          │ alias       │ description                                  │
+    │ application   │ application │ Generate a new application workspace         │
+    │ class         │ cl          │ Generate a new class                         │
+    │ configuration │ config      │ Generate a CLI configuration file            │
+    │ controller    │ co          │ Generate a controller declaration            │
+    │ decorator     │ d           │ Generate a custom decorator                  │
+    │ filter        │ f           │ Generate a filter declaration                │
+    │ gateway       │ ga          │ Generate a gateway declaration               │
+    │ guard         │ gu          │ Generate a guard declaration                 │
+    │ interceptor   │ itc         │ Generate an interceptor declaration          │
+    │ interface     │ itf         │ Generate an interface                        │
+    │ library       │ lib         │ Generate a new library within a monorepo     │
+    │ middleware    │ mi          │ Generate a middleware declaration            │
+    │ module        │ mo          │ Generate a module declaration                │
+    │ pipe          │ pi          │ Generate a pipe declaration                  │
+    │ provider      │ pr          │ Generate a provider declaration              │
+    │ resolver      │ r           │ Generate a GraphQL resolver declaration      │
+    │ resource      │ res         │ Generate a new CRUD resource                 │
+    │ service       │ s           │ Generate a service declaration               │
+    │ sub-app       │ app         │ Generate a new application within a monorepo │
+    └───────────────┴─────────────┴──────────────────────────────────────────────┘
+
+Options:
+  -d, --dry-run                      Report actions that would be taken without writing out results.
+  -p, --project [project]            Project in which to generate files.
+  --flat                             Enforce flat structure of generated element.
+  --no-flat                          Enforce that directories are generated.
+  --spec                             Enforce spec files generation. (default: true)
+  --skip-import                      Skip importing (default: false)
+  --no-spec                          Disable spec files generation.
+  -c, --collection [collectionName]  Schematics collection to use.
+  -h, --help                         Output usage information.
+
+
+-----------------------
+-----------------------
+Setup
+-------------------
+
+npm i -g @nestjs/cli
+
+nest new nom-du-projet
+->
+src
+  └─ app.controller.spec.ts     -> unité de tests pour le controller
+  └─ app.controller.ts          -> contrôleur de base avec une route (reçoit les requêtes et répond aux clients)
+  └─ app.module.ts              -> définition du module (controllers, services, exports, ...)
+  └─ app.service.ts             -> service avec une méthode, la "business logic", est injectable
+  └─ main.ts                    -> le point de départ, où il y a le app.listen(port)
+
+ensuite on peut,
+npm run start:dev
+
+* On peut ajouter --strict au nest new si on veut que ce soit en mode strict
+
+
+-----------------------
+-----------------------
+CONTROLLERS (et donc le routing)
+-------------------
+
+Pour recevoir des requëtes HTTP et return qqchose.
+
+Les routes sont les @decorator.
+
+C @Post()
+R @Get()
+U @Patch()
+D @Delete()
+
+Il y a des decorator pour obtenir des infos ou pour forcer une valeur à envoyer. ex:
+@HttpCode(number), @Body(), @Session(), @Req(), etc...
+
+On peut générer une réponse plus custom (comme Express) avec @Res() ou @Next()
+
+Le path de la route, ex: @Get('/chiens') peut contenir des ?, +, *, (), -, .
+
+Pour construire un header de réponse custom, ex:
+  @Post()
+  @Header('Cache-Control', 'none')
+  create() {
+    ...
+  }
+
+On peut redirect, ex:
+  @Get()
+  @Redirect('https://nestjs.com', '301')
+
+On peut return un objet, ex:
+  { url: '', StatusCode: number }
+
+On accède aux paramètres de la requête avec des valeurs directes ex: @Ip() ou avec @Param() ex:
+  @Param('id') id: string
+
+Si la requête vient d'un URL en particulier: Sub-domain routing
+
+On peut utiliser des async/await Promise à l'ancienne.
+
+On peut se binder à un flux de données ou à des modifications observées avec Observable.
+
+Request Payloads (utilisation d'un DTO), on transfère du controller au service 
+seulement les données nécessaires et on cache le reste. ex:
+  @Post()
+  async create(@Body createDto: CreateDto) { ... }
+et dans un create.dto.ts ->
+  export class CreateDto() {
+    name: string;
+    age: number;
+  }
+
+Les controlleurs doivent apartenir à leur mopdule donc il faut le déclarer dans le @Module.
+(tout importer, tout déclarer dans les arrays, et export ce module, voir prochaine seciton de notes...)
+
+
+-----------------------
+-----------------------
+PROVIDERS
+-------------------
+
+Est un provider lorsqu'il peut être injecté comme dépendance.
+
+Les contrôleurs doivent déléguer leurs tâches aux providers.
+
+Sont déclarés comme providers dans le module.
+
+Sont services, repositories, factories, helpers, etc.
+
+Cette philosophie est SOLID :
+  S ingle:        Une classe doit avoir une seule responsabilité.
+  O open-Closed:  Les entités doivent être extensibles mais pas modifiables.
+  L iskov:        Les fonctions qui utilisent pointeurs ou références vers classes de bases, 
+                  utilisent des objets de classes dérivées sans le savoir.
+  I interface:    Les clients ne doivent pas être forcés de dépendre d'interface qu'ils n'utilisent pas.
+  D ependency:    Modules de haut niveau indépendants des détails de modules de bas niveau.
+                  ex: ???
+
+
+-----------------------
+-----------------------
+SERVICES
+-------------------
+
+nest g service nom-du-service
+
+
+-----------------------
+-----------------------
+TYPEORM
+-------------------
+
+npm install -g --save @nestjs/typeorm typeorm mysql2
+
+dans app.module.ts. ajouter :
+
+  import { Module } from '@nestjs/common';
+  import { TypeOrmModule } from '@nestjs/typeorm';
+  import { DataSource } from 'typeorm';
+
+  @Module({
+    imports: [
+      TypeOrmModule.forRoot({
+        type: 'mysql',
+        host: 'localhost',
+        port: 3306,
+        username: 'root',
+        password: 'root',
+        database: 'test',
+        entities: [],
+        synchronize: true,
+      }),
+    ],
+  })
+  export class AppModule {
+    constructor(private dataSource: DataSource) {}
+  }
+
+Créer une entité.
+
+L'insérer dans le array entities.

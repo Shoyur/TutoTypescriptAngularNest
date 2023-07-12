@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>TESTS JSON</h1>
+    <button onclick="Func()">AFFICHER LE CONTENU</button>
+    <script>
+      function Func() {
+        fetch("00__Exercices_JSON.JSON")
+          .then((res) => {
+            return res.json();
+          })
+          .then((data) => console.log(data));
+      }
+    </script>
+  </body>
+</html>

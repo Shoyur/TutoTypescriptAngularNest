@@ -1,0 +1,392 @@
+Angular est un framework front-end.
+
+
+********************************
+************ NOTES *************
+    - Dans les class, les fichiers ts, les variables n'ont pas de déclarateurs let ou var, 
+      c'est direct le nom, ex:   nom: string = "Jean";
+    - 
+********************************
+********************************
+
+
+-----------------------
+-----------------------
+COMPONENTS
+-------------------
+
+L'application Angular, est une construction faite de "components"
+
+Chaque "component" a (des fichiers) :
+- Un TypeScript Class avec un @Component() decorator
+   Exemple :
+ 
+      import { Component } from '@angular/core';
+      
+      @Component({
+         selector: 'app-root',
+         templateUrl: './app.component.html',
+         styleUrls: ['./app.component.css']
+       })
+       export class AppComponent {
+         title = 'premierProjetAngular';
+       }
+
+- Un Html (template) qui décrit le contenu et comment agit ce composant
+   Exemple :
+
+       Des DIV etc. qui iront dans le
+         <body>
+           <app-root>***LE COMPONENT SERA ICI***</app-root>
+         </body>
+  Si on écrit templateUrl, c'est un fichier template html.
+  Mais si on écrit template: '.....', c'est direct du code html.
+
+- Un fichier CSS qui agie seulement sur ce composant
+
+
+-----------------------
+-----------------------
+TEMPLATES
+-------------------
+
+Le fameux template de composant est du html et une syntaxe (syntax elements) Angular en plus 
+ pour insérer des valeurs dynamiques.
+ ca va traiter les valeurs comme le title de plus haut (export class)
+ ex.:
+ si dans template:
+
+ <p>{{ title }}</p>
+
+ en vrai, ca devient <p>premierProjetAngular</p>
+ les accolades doubles indiquent que Angular doit processer cette valeur (interpolation)
+ les accolades provoquent l'interpolation
+
+ il peut aussi y avoir des liaisons de propriétés (property binding)
+ sur les éléments :
+  <p [id]="sayHelloId" [style.color]="fontColor">
+    You can set my color in the component!
+  </p>
+  si on utilise ces square brackets, ca bind l'attribut ou la propriété à la class de composant
+  autrement dit, les [property bindings] seront un attribut html comme par exemple id="", mais
+  aussi ça nous laisse utiliser cette valeur de propriété dans une expression de template (dans
+  le traitement du template)
+
+on crée un event listener en mettant une action entre parenthèses :
+  <button
+    type="button"
+    [disabled]="canClick" // pas certain de cette ligne encore
+    (click)="sayMessage()">
+    Trigger alert message
+  </button>
+    
+  sayMessage() {
+    alert(this.message);
+  }
+
+et si on combine interpolation, property binding, event binding :
+  import { Component } from '@angular/core';
+    
+  @Component ({
+    selector: 'hello-world-bindings',
+    templateUrl: './hello-world-bindings.component.html'
+  })
+  export class HelloWorldBindingsComponent {
+    fontColor = 'blue';
+    sayHelloId = 1;
+    canClick = false;
+    message = 'Hello, World';
+    
+    sayMessage() {
+      alert(this.message);
+    }
+  }
+
+ne pas oublier que selector: est le <nom_du_selector>ici</nom_du_selector>
+
+
+-----------------------
+-----------------------
+DIRECTIVES (dans les templates)
+-------------------
+
+<div *ngIf="canEdit; else noEdit">
+    <p>You can edit the following paragraph.</p>
+</div>
+ 
+<ng-template #noEdit>
+    <p>The following paragraph is read only. Try clicking the button!</p>
+</ng-template>
+
+c'est un if-else,
+si la propriété canEdit dans ce cas ci, de classe, est vrai, le 1er <p>,
+else utiliser dans le div, l'attribut noEdit
+--- <ng-template> ---
+donc <ng-template> permet de mettre du contenu dans le template qui sera 
+rendered (rendu) seulement si voulu,
+en d'autres mots, <ng-template> est utilisé seulement avec des directives structurelles
+telle que ngIf, ngFor, ngForOf, ngSwitch, etc...
+
+
+-----------------------
+-----------------------
+Dependency injection
+-------------------
+
+si une classe B utilise une autre classe A,
+pas besoin d'instancier la classe A, on fou l'objet direct et Angular s'en occupe
+ex.:
+
+  logger.service.ts ->
+
+  import { Injectable } from '@angular/core';
+
+  @Injectable({providedIn: 'root'})
+  export class Logger {
+    writeCount(count: number) {
+      console.warn(count);
+    }
+  }
+
+  hello-world-di.component.ts ->
+
+  import { Component } from '@angular/core';
+  import { Logger } from '../logger.service';
+
+  @Component({
+    selector: 'hello-world-di',
+    templateUrl: './hello-world-di.component.html'
+  })
+  export class HelloWorldDependencyInjectionComponent  {
+    count = 0;
+
+    constructor(private logger: Logger) { }
+
+    onLogMe() {
+      this.logger.writeCount(this.count);
+      this.count++;
+    }
+  }
+
+  ...on a mis logger dans constructor direct
+
+
+-----------------------
+-----------------------
+CLI
+-------------------
+
+commandes CLI communes :
+
+    ng build 	      Compiles an Angular application into an output directory.
+    ng serve 	      Builds and serves your application, rebuilding on file changes.
+    ng generate 	  Generates or modifies files based on a schematic.
+        par exemple:
+        on peut créer les 3 (4?) fichiers d'un composant directement avec
+        ng generate component product-alerts
+    ng test 	      Runs unit tests on a given project.
+    ng e2e 	        Builds and serves an Angular application, then runs end-to-end tests.
+
+
+-----------------------
+-----------------------
+PASSING DATA
+-------------------
+
+un bouton est dans une zone, le bouton est le child, la zone est le parent
+On peut mettre dans le child, un input ou un output
+    
+    input:    l'enfant prend une donnée du parent à sa création par exemple (pass data TO a CHILD component)
+      Dans le child:
+        - import { Component, Input } from '@angular/core'; // on doit ajouter Input
+        - @Input() product!: Product; // dans la export class
+        - on utilise "product" dans le html template
+      
+    output:   l'enfant envoie une donnée au parent (pass data TO a PARENT component)
+      Dans le child:
+        - import { Component, Input, Output, EventEmitter } from '@angular/core'; // on doit ajouter Output et EventEmitter
+        - @Output() notify1 = new EventEmitter(); // dans la export class
+        - <button type="button" (click)="notify.emit()">Notify Me</button> // dans le html template
+      Le component doit être disponible dans le app.module (!)
+      Dans le parent:
+        - dans le html parent, on met par exemple <app-product-alerts [product]="product" (notify1)="onNotify()"></app-product-alerts>
+        - et dans le export class, la fonction onNotify() { window.alert('You will be notified when the product goes on sale');}
+
+
+-----------------------
+-----------------------
+NAVIGATION
+-------------------
+
+associer un chemin url avec un composant
+le Router angular affiche des composants selon ce chemin url
+
+pour ce nouveau chemin, qui dans ce cas ci, est un nouveau composant qui affiche les détails d'un produit en particulier
+on a donc créé un nouveau component
+dans app.module, on ajoute à RouterModule
+    { path: 'products/:productId', component: ProductDetailsComponent },
+dans un lien, disons anchor, on ajoute
+    [routerLink]="['/products', product.id]"
+la 2e valeur est optionnelle, mais disons que id = 1, c'est équivalent à
+    site.com/products/1
+dans le composant on importe le Router, OnInit et aussi le contenu à afficher
+    import { Component, OnInit } from '@angular/core';
+    import { ActivatedRoute } from '@angular/router';
+    import { Product, productsSource } from '../products';
+on ajoute a la nouvelle export class
+    implements OnInit
+on traite un produit qu'on va recevoir dans cette class
+    product: Product | undefined;
+    constructor(private route: ActivatedRoute) { }
+    ngOnInit() {
+      const routeParams = this.route.snapshot.paramMap;
+      const productIdFromRoute = Number(routeParams.get('productId'));
+      this.product = products.find(product => product.id === productIdFromRoute);
+    }
+et le html peut devenir
+    <h2>Product Details</h2>
+    <div *ngIf="product">
+      <h3>{{ product.name }}</h3>
+      <h4>{{ product.price | currency }}</h4>
+      <p>{{ product.description }}</p>
+    </div>
+
+
+-----------------------
+-----------------------
+SERVICE
+-------------------
+
+un service est une instance d'une class qu'on rend disponible partout (toute l'application) 
+en utilisant l'injection de class (dependency injection system)
+
+si plusieurs composants doivent accéder un composant, ce dernier doit plutôt être un service
+les services ont des fonctionnalités spécifiques pour partager des données à plusieurs composants
+exemple de service
+    - authentification
+    - validation de données
+    - interaction avec l'externe, API, socket, etc.
+    - formattage de chiffres, date, etc.
+    - encapsuler (wrap) une librairie externe
+
+pour générer un service
+    ng generate service le-nom
+
+parce-que le service n'est pas une vue mais un service, cette commande a généré
+service et service.spec seulement, pas de html ou css, évidemment
+
+il faut maintenant ajouter au service.ts
+    import { Injectable } from '@angular/core';
+ajouter
+    @Injectable({
+      providedIn: 'root'
+    })
+dans notre cas ajouter
+    import { Product } from './products';
+    car c'est ces objets qu'on va recevoir, manipuler, etc.
+de la manière suivante dans la export class
+    items: Product[] = [];
+    addToCart(product: Product) { this.items.push(product); }
+    getItems() { return this.items; }
+    clearCart() { this.items = []; return this.items; }
+ensuite on peut utiliser ce service en l'important dans un component
+    import { CartService } from '../cart.service';
+    ajouter dans le construtor en paramètre
+    private cartService: CartService
+  et ensuite se servir des méthodes comme on veut comme exemple
+    addToCart(product: Product) {
+      this.cartService.addToCart(product);
+      window.alert('Le "'+product.name+'" a été ajouté au panier.');
+    }
+
+ensuite j'ai fait un cart view, pour afficher le contenu du cart lorsque je clic dessus
+en important items getItems() ......... etc.
+
+
+-----------------------
+-----------------------
+HttpClient
+-------------------
+
+dans app.module
+    import { HttpClientModule } from '@angular/common/http';
+pour que ce soir reconnu partout dans le projet, ajouter
+    HttpClientModule,    dans les imports de @NgModule
+configurer cart.service à utiliser ce module, donc on
+    import { HttpClient } from '@angular/common/http';
+    constructor(private http: HttpClient) {}
+    getShippingPrices() {
+      return this.http.get<{type: string, price: number}[]>('/assets/shipping.json');
+      // formattage = 
+      // un table d'objets, avec 2 propriétés, type et price
+    }
+
+...besoin de beaucoup plus d'explications...
+
+
+-----------------------
+-----------------------
+FORMS
+-------------------
+
+dans le cart component
+    import { FormBuilder } from '@angular/forms';
+qui est un service, donc un ajoute le service dans le constructor
+    private formBuilder: FormBuilder
+on ajoute un FormBuilder group() qui ceci est une méthode pour créer un
+paquet de propriétés à ce formattage
+    checkoutForm = this.formBuilder.group({
+      name: '',
+      address: ''
+    });
+on ajoute un onSubmit() qui fait ce qu'on veut
+dans le html on ajoute
+    <form [formGroup]="checkoutForm">
+      <button class="button" type="submit">Purchase</button>
+    </form>
+ensuite ajouter toute la sauce dans ce form
+et voilà
+
+
+-----------------------
+-----------------------
+UN PEU DE NPM EN GÉNÉRAL ET NG BUILD
+-------------------
+
+si on veut transoprter le projet léger, 
+on prend seulement le dossier SRC et les fichiers en dessous
+ensuite si on npm install, ca remet tout
+
+quand le projet est pret à upload sur un serveur ou un environnement sans Angular, on 
+    ng build
+ca va créer un dossier DIST qui contiendra tout ce qu'Il faut pour déployer
+ce que le build fait :
+    In Angular, you need to run the ng build command to compile your application and generate the JavaScript files that will be served to the browser.
+    The ng build command performs a number of tasks, including:
+        Compiling your TypeScript code into JavaScript that can be executed in the browser.
+        Bundling your application code, third-party libraries, and assets into optimized files that can be loaded efficiently by the browser.
+        Generating index.html and other necessary files that are needed to serve your application.
+        Transpiling and bundling any Sass or Less files into CSS.
+    Once you've run ng build, you'll have a dist folder in your project directory that contains the compiled and optimized JavaScript, CSS, and HTML files that make up your Angular application.
+    You can then deploy the contents of the dist folder to a web server or hosting service to make your application available to users.
+    In summary, you need to run ng build to compile and optimize your application, generate the necessary files for serving your application, and prepare it for deployment.
+
+Ensuite
+    Copy the contents of the dist/my-project-name folder to your web server. 
+    Because these files are static, you can host them on any web server capable of serving files; such as Node.js, Java, .NET, or any backend such as Firebase, Google Cloud, or App Engine. 
+    For more information, see Building & Serving and Deployment. (Angular.io)
+
+
+-----------------------
+-----------------------
+PROJECT FROM SCRATCH
+-------------------
+
+local, avoir 
+    npm install -g @angular/cli
+et créer un projet (workspace) avec
+    ng new my-app
+mais pour exécuter des scripts dans powershell, si ce n'est pas déjà fait, on doit
+    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+ensuite ouvrir ce projet dans un editeur, disons VScode, et exécuter pour éditer pendant qu'on voit le résultat avec
+    ng serve
